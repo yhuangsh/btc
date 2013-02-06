@@ -17,7 +17,7 @@
 	  nonce }).
 
 parse_block(Blob) when is_binary(Blob) ->
-    parse_block_1(
+    parse_block_ret(
       parse_transactions(
 	parse_block_header(
 	  chk_block_size(
@@ -36,10 +36,11 @@ parse_transactions({<<16#fe, N:32/little-unsigned-integer, Blob/binary>>, Parsed
     parse_transactions(N, {Blob, Parsed#{n_trans=N}});
 parse_transactions({<<16#ff, Counter:64/little-unsigned-integer, Blob/binary>>, Parsed}) when is_record(Parsed, btcblk) ->
     parse_transactions(N, {Blob, Parsed#{n_trans=N}});
-
+parse_transactions({Blob, _} -> {Blob, undefined}.
+			 
 parse_transactions(0, {Blob, Parsed}) -> {Blob, Parsed};
 parse_transactions(_, {Blob, undefined}) -> parse_transactions(0, {Blob, undefined});
-parse_transactions(N, {Blob, Parsed}) -> parse_transactions_1(parse_transaction({Blob, #btctr{}})).
+parse_transactions(N, {Blob, Parsed}) -> parse_transactions_ret(parse_transaction({Blob, #btctr{}})).
 parse_transactions_ret({NewBlob, undefined}) -> parse_transactions(N-1, {NewBlob, undefined});
 parse_transactions_ret({NewBlob, NewTrans}) ->
     NewTransList = [NewTrans | Parsed#btcblk.trans],
@@ -65,7 +66,6 @@ chk_block_size({<<BlockSize:4/little-unsigned, Blob/binary>>, Parsed}) when is_r
 	true -> {Blob, Parsed#{size=BlockSize}}
     end;
 chk_block_size(Raw, _) -> {Raw, undefined}.
-
 
 parse_block_header(<<Version:32/little-unsigned, 
 		     HashPrevBlock:32/bytes, 
