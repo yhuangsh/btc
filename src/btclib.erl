@@ -1,12 +1,14 @@
 -module(btclib).
 -compile(export_all).
 
+-define(BTC_MAGIC, 16#d9b4bef9).
+
 -record(btcblk, 
-	{ magic,
+	{ magic=?BTC_MAGIC,
 	  size, 
 	  header,
 	  n_tx,
-	  txs = []}).
+	  txs = [] }).
 
 -record(btcblkhd,
 	{ version,
@@ -57,11 +59,7 @@ parse_blk(Blob) when is_binary(Blob) ->
     parse_txs(
       parse_n_tx(
 	parse_blk_hd(
-	  chk_blk_size(
-	    chk_magic(Blob))))).
-
-chk_magic(<<16#D9B4BEF9:32/little-unsigned-integer, Blob/binary>>) -> 
-    {Blob, #btcblk{magic=16#d9b4bef9}}.
+	  chk_blk_size({check_magic(Blob), #btcblk{}})))).
 
 chk_blk_size({<<BlockSize:32/little-unsigned-integer, Blob/binary>>, Parsed}) when BlockSize =< size(Blob) ->
     {Blob, Parsed#btcblk{size=BlockSize}}.
@@ -406,6 +404,12 @@ opcode(184) -> 'OP_NOP9';
 opcode(185) -> 'OP_NOP10';
 
 opcode(_X) when is_integer(_X)  -> undefined.
+
+
+%% 
+check_magic(<<16#d9b4bef9:32/little-unsigned-integer, Blob/binary>>) -> 
+    Blob.
+
 
 %% Interface to SHA256 & RIPEMD160 & EC
 sha256(X) ->
