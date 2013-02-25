@@ -11,12 +11,12 @@ new(Type, Hash) when Type =:= error; Type =:= msg_tx; Type =:= msg_block, is_bin
 	   hash = Hash}.
 
 %% Getters
-type(#invec{type = Type}) -> Type.
-hash(#invec{hash = Hash}) -> Hash.
+get_type(#invec{type = Type}) -> Type.
+get_hash(#invec{hash = Hash}) -> Hash.
 
 %% Setters
-type(#invec{hash = Hash}, Type) -> new(Type, Hash).
-hash(#invec{type = Type}, Hash) -> new(Type, Hash).
+set_type(#invec{hash = Hash}, Type) -> new(Type, Hash).
+set_hash(#invec{type = Type}, Hash) -> new(Type, Hash).
     
 %% Binary serializers
 from_binary(<<TypeInt:32/little-unsigned-integer,

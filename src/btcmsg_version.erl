@@ -18,21 +18,21 @@ new(Version, Services, Timestamp, AddrRecv, AddrFrom, UserAgent, StartHeight) ->
 		timestamp = Timestamp,
 		addr_recv = AddrRecv,
 		addr_from = AddrFrom,
-		nonce = btcalg:nonce(64),
+		nonce = btcmisc:nonce(64),
 		user_agent = UserAgent,
 		start_height = StartHeight}.
 
-new(Version, Timestamp, AddrRecv, AddrFrom, StartHeight) ->
-    new(Version, ['NODE_NETWORK'], Timestamp, AddrRecv, AddrFrom, "", StartHeight).
+new(Version, Timestamp, AddrRecv, AddrFrom, UserAgent, StartHeight) ->
+    new(Version, ['NODE_NETWORK'], Timestamp, AddrRecv, AddrFrom, UserAgent, StartHeight).
 
-new(Version, AddrRecv, AddrFrom, StartHeight) ->
-    new(Version, btcalg:timestamp_now(), AddrRecv, AddrFrom, StartHeight).
+new(Version, AddrRecv, AddrFrom, UserAgent, StartHeight) ->
+    new(Version, btcmisc:timestamp(), AddrRecv, AddrFrom, UserAgent, StartHeight).
 
 %% Binary serializers
 from_binary(Blob) when is_binary(Blob) ->
     {NextBlob, Msghd} = btcmsghd:from_binary(Blob),
-    Length = btcmsghd:length(Msghd),
-    Checksum = btcmsghd:checksum(Msghd),
+    Length = btcmsghd:get_length(Msghd),
+    Checksum = btcmsghd:get_checksum(Msghd),
     <<PayloadBlob:Length/bytes, BlobAfterPayload/binary>> = NextBlob,
     Checksum = btcalg:checksum(PayloadBlob),
     <<Version:32/little-unsigned-integer,
@@ -41,14 +41,14 @@ from_binary(Blob) when is_binary(Blob) ->
       AddrRecvBlob:26/bytes,
       AddrFromBlob:26/bytes,
       Nonce:64/little-unsigned-integer,
-      NextPayloadBlob>> = PayloadBlob,
-    {<<>>, AddrRecv} = btcnetaddr:from_binary_without_timestamp(AddrRecvBlob),
-    {<<>>, AddrFrom} = btcnetaddr:from_binary_without_timestamp(AddrFromBlob),
+      NextPayloadBlob/binary>> = PayloadBlob,
+    {<<>>, AddrRecv} = btcnetaddr:from_binary_notime(AddrRecvBlob),
+    {<<>>, AddrFrom} = btcnetaddr:from_binary_notime(AddrFromBlob),
     true = (Version >= 106),
     {NextNextPayloadBlob, UserAgent} = btcvarstr:from_binary(NextPayloadBlob),
     <<StartHeight:32/little-unsigned-integer>> = NextNextPayloadBlob,
     {BlobAfterPayload, {Msghd, #msgversion{version = Version,
-					   services = integer_to_services(Services),
+					   services = btcmisc:integer_to_services(Services),
 					   timestamp = Timestamp,
 					   addr_recv = AddrRecv,
 					   addr_from = AddrFrom,
@@ -64,9 +64,9 @@ to_binary(#msgversion{version = Version,
 		      nonce = Nonce,
 		      user_agent = UserAgent,
 		      start_height = StartHeight}) ->
-    ServicesInt = services_to_integer(Services),
-    true = (btcnetaddr:time(AddrRecv) =:= null),
-    true = (btcnetaddr:time(AddrFrom) =:= null),
+    ServicesInt = btcmisc:services_to_integer(Services),
+    true = (btcnetaddr:get_time(AddrRecv) =:= null),
+    true = (btcnetaddr:get_time(AddrFrom) =:= null),
     AddrRecvBlob = btcnetaddr:to_binary(AddrRecv),
     AddrFromBlob = btcnetaddr:to_binary(AddrFrom),
     UserAgentBlob = btcvarstr:to_binary(btcvarstr:new(UserAgent)),
@@ -81,8 +81,5 @@ to_binary(#msgversion{version = Version,
     MsghdBlob = btcmsghd:to_binary(btcmsghd:new(version, PayloadBlob)),
     <<MsghdBlob/binary, PayloadBlob/binary>>.
 
-%% Internal funs
-integer_to_services(1) -> ['NODE_NETWORK'].
-services_to_integer(['NODE_NETWORK']) -> 1.
-    
+   
     

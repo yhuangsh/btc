@@ -18,7 +18,7 @@ from_binary(<<16#fd, N:16/little-unsigned-integer, Blob/binary>>) ->
     {Blob, N};
 from_binary(<<16#fe, N:32/little-unsigned-integer, Blob/binary>>) -> 
     {Blob, N};
-from_bariny(<<16#ff, N:64/little-unsigned-integer, Blob/binary>>) -> 
+from_binary(<<16#ff, N:64/little-unsigned-integer, Blob/binary>>) -> 
     {Blob, N}.
 
 to_binary(N) when N < 16#fd ->

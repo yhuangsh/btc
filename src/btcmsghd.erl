@@ -15,14 +15,14 @@ new(Command, Length, Checksum) when is_atom(Command),
 				    is_integer(Length), 
 				    is_binary(Checksum), byte_size(Checksum) =:= 4 ->    
     #msghd{magic = ?BTC_MAGIC,
-	   command = command_to_binary(Command),
+	   command = Command,
 	   length = Length,
 	   checksum = Checksum}.
 
 %% Getters
-command(#msghd{command = Command}) -> Command.
-length(#msghd{length = Length}) -> Length.
-checksum(#msghd{checksum = Checksum}) -> Checksum.
+get_command(#msghd{command = Command}) -> Command.
+get_length(#msghd{length = Length}) -> Length.
+get_checksum(#msghd{checksum = Checksum}) -> Checksum.
     
 %% Setters
 %% No setters
